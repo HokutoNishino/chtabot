@@ -14,6 +14,19 @@
 
 ---
 
+## ℹ️ AIエンジンは2パターンあります
+
+AI のバックエンドには2つの選択肢があります。自分の状況に合った導入方法を選んでください。
+
+| | パターンA: GitHub Models | パターンB: Google Gemini API |
+|--|---|---|
+| **向いている人** | GitHub Copilot 加入者 | 誤れない初心者向けに教える場合 |
+| **無料枠** | Copilot 加入済みなら追加費用なし | 無料枠あり（Gemini 2.0 Flash）|
+| **必要なアカウント** | GitHub（持っていればOK） | Google アカウント |
+| **コードの差異** | 最小限 | SDK と呼び出し方が少し専用 |
+
+---
+
 ## 必要なものを準備する
 
 以下を事前にインストール・登録してください。
@@ -25,7 +38,8 @@
 | Docker Desktop | アプリをコンテナで動かす | https://www.docker.com/products/docker-desktop |
 | Git | コードのバージョン管理 | https://git-scm.com |
 | GitHub アカウント | コードをクラウド保存 | https://github.com |
-| OpenAI アカウント | ChatGPT の API キーを取得 | https://platform.openai.com |
+| **パターンAのみ** GitHub Personal Access Token | GitHub Models の認証 | https://github.com/settings/tokens で発行 |
+| **パターンBのみ** Google アカウント + Gemini API キー | Gemini API の認証 | https://aistudio.google.com |
 
 ---
 
@@ -119,6 +133,8 @@ start スクリプトは `node server.js` にしてください。
 
 ### 3-2. `server.js` を作ってもらう
 
+**パターンA（GitHub Models）の場合：**
+
 ```
 以下の条件で Express サーバーの server.js を作成してください。
 
@@ -127,9 +143,28 @@ start スクリプトは `node server.js` にしてください。
 - POST /api/chat エンドポイントを作る
   - リクエスト: { message: "テキスト" }
   - レスポンス: { reply: "AIの返答" }
-- OpenAI の gpt-5-mini モデルを使う
+- OpenAI SDK を使い、エンドポイントは https://models.inference.ai.azure.com 、
+  認証は環境変数 GITHUB_TOKEN を使う
+- モデルは gpt-4o-mini
 - 会話履歴を配列で管理し、直近6件だけ送る
 - max_tokens は 500 に設定する
+- 10秒に1リクエストのレートリミットをつける
+- システムプロンプトは "You are a helpful assistant."
+```
+
+**パターンB（Google Gemini API）の場合：**
+
+```
+以下の条件で Express サーバーの server.js を作成してください。
+
+- dotenv で .env を読み込む
+- `public` フォルダの静的ファイルを配信する
+- POST /api/chat エンドポイントを作る
+  - リクエスト: { message: "テキスト" }
+  - レスポンス: { reply: "AIの返答" }
+- @google/genai パッケージを使い、環境変数 GEMINI_API_KEY で認証する
+- モデルは gemini-2.0-flash
+- 会話履歴を配列で管理し、直近6件だけ送る
 - 10秒に1リクエストのレートリミットをつける
 - システムプロンプトは "You are a helpful assistant."
 ```
@@ -196,12 +231,27 @@ Node.js プロジェクト用の .gitignore を作成してください。
 > ⚠️ `.env` は AI に作ってもらわず、**自分で作成**してください。  
 > API キーは絶対に他人に見せてはいけません。
 
-1. OpenAI のサイト（https://platform.openai.com/api-keys）でAPIキーを発行
-2. プロジェクト直下に `.env` ファイルを新規作成
-3. 以下を記載：
+**パターンA（GitHub Models）の場合：**
+
+1. https://github.com/settings/tokens で Personal Access Token を発行
+   - `Token name` に任意の名前を入力（例: `chatbot`）
+   - `Expiration` は 30 days 程度でOK
+   - スコープは最小限（**何も選択しなくてもOK**）
+2. `.env` ファイルを新規作成して以下を記載：
 
 ```
-OPENAI_API_KEY=sk-ここに自分のAPIキーを貼り付ける
+GITHUB_TOKEN=ghp_ここにトークンを貼り付ける
+PORT=3000
+```
+
+**パターンB（Google Gemini API）の場合：**
+
+1. https://aistudio.google.com にアクセス
+2. 「Get API key」→「Create API key」でキーを発行
+3. `.env` ファイルを新規作成して以下を記載：
+
+```
+GEMINI_API_KEY=ここにAPIキーを貼り付ける
 PORT=3000
 ```
 
@@ -295,7 +345,8 @@ git push
 | 症状 | 原因 | 対処法 |
 |------|------|--------|
 | `docker: command not found` | Docker Desktop が起動していない | Docker Desktop を起動する |
-| `Invalid API key` | `.env` の API キーが間違っている | OpenAI で再発行して貼り直す |
+| `Invalid API key` | `.env` の API キーが間違っている | 各サービスで再発行して貼り直す |
+| `Unauthorized` | GitHub Token のスコープ不足 | Token を再発行する |
 | 画面が真っ白 | `index.html` のパスが間違っている | `public/index.html` に置かれているか確認 |
 | 返答が来ない | レートリミットにかかった | 10秒待って再送信する |
 
