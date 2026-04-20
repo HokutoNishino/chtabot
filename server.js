@@ -7,6 +7,11 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const MAX_HISTORY_MESSAGES = Number(process.env.MAX_HISTORY_MESSAGES || 4);
+const MAX_OUTPUT_TOKENS = Number(process.env.MAX_OUTPUT_TOKENS || 200);
+const DAILY_REQUEST_LIMIT = Number(process.env.DAILY_REQUEST_LIMIT || 30);
+const RATE_LIMIT_WINDOW_SECONDS = Number(process.env.RATE_LIMIT_WINDOW_SECONDS || 30);
+const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS || 1);
 
 // GitHub Models クライアント（OpenAI SDK 互換）
 const client = new OpenAI({
@@ -16,6 +21,8 @@ const client = new OpenAI({
 
 // 会話履歴（サーバーメモリ上で管理）
 const conversationHistory = [];
+let dailyRequestCount = 0;
+let currentDay = new Date().toISOString().slice(0, 10);
 
 // JSONパース
 app.use(express.json());
@@ -23,11 +30,11 @@ app.use(express.json());
 // 静的ファイル配信（public/index.html）
 app.use(express.static(path.join(__dirname, 'public')));
 
-// レートリミット：10秒に1リクエストまで
+// レートリミット：短時間の連投を防ぐ
 const chatLimiter = rateLimit({
-  windowMs: 10 * 1000,
-  max: 1,
-  message: { error: '送信が速すぎます。10秒待ってから再送信してください。' },
+  windowMs: RATE_LIMIT_WINDOW_SECONDS * 1000,
+  max: RATE_LIMIT_MAX_REQUESTS,
+  message: { error: `送信が速すぎます。${RATE_LIMIT_WINDOW_SECONDS}秒待ってから再送信してください。` },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -35,6 +42,15 @@ const chatLimiter = rateLimit({
 // POST /api/chat
 app.post('/api/chat', chatLimiter, async (req, res) => {
   const { message } = req.body;
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (today !== currentDay) {
+    currentDay = today;
+    dailyRequestCount = 0;
+  }
+  if (dailyRequestCount >= DAILY_REQUEST_LIMIT) {
+    return res.status(429).json({ error: '本日の利用上限に達しました。明日またお試しください。' });
+  }
 
   // 入力バリデーション
   if (!message || typeof message !== 'string') {
@@ -50,8 +66,8 @@ app.post('/api/chat', chatLimiter, async (req, res) => {
   // 会話履歴にユーザーメッセージを追加
   conversationHistory.push({ role: 'user', content: message.trim() });
 
-  // 直近6件のみ送信
-  const recentHistory = conversationHistory.slice(-6);
+  // 直近の履歴のみ送信してトークン消費を抑える
+  const recentHistory = conversationHistory.slice(-MAX_HISTORY_MESSAGES);
 
   try {
     const response = await client.chat.completions.create({
@@ -60,10 +76,11 @@ app.post('/api/chat', chatLimiter, async (req, res) => {
         { role: 'system', content: 'You are a helpful assistant.' },
         ...recentHistory,
       ],
-      max_tokens: 500,
+      max_tokens: MAX_OUTPUT_TOKENS,
     });
 
     const reply = response.choices[0].message.content;
+    dailyRequestCount += 1;
 
     // 会話履歴にAI応答を追加
     conversationHistory.push({ role: 'assistant', content: reply });
@@ -77,4 +94,5 @@ app.post('/api/chat', chatLimiter, async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`Cost guard: ${RATE_LIMIT_WINDOW_SECONDS}s/${RATE_LIMIT_MAX_REQUESTS} req, daily ${DAILY_REQUEST_LIMIT} req, max_tokens ${MAX_OUTPUT_TOKENS}`);
 });
