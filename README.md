@@ -1,6 +1,6 @@
 # チャットボット（お試し版）
 
-OpenAI の API を使ったシンプルなチャットボットです。  
+GitHub Models API を使ったシンプルなチャットボットです。  
 ブラウザで動作し、Node.js + Express + Docker で構成されています。
 
 ---
@@ -8,7 +8,7 @@ OpenAI の API を使ったシンプルなチャットボットです。
 ## 動作環境
 
 - Docker / Docker Compose がインストールされていること
-- OpenAI の API キーを取得済みであること
+- GitHub Personal Access Token を取得済みであること
 
 ---
 
@@ -23,7 +23,7 @@ cd chatbot
 
 ### 2. 環境変数を設定
 
-`.env.example` をコピーして `.env` を作成し、API キーを記載します。
+`.env.example` をコピーして `.env` を作成し、トークンを記載します。
 
 ```bash
 cp .env.example .env
@@ -32,7 +32,7 @@ cp .env.example .env
 `.env` を編集：
 
 ```
-OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxx
+GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxx
 PORT=3000
 ```
 
@@ -77,13 +77,14 @@ chatbot/
 
 ## コスト対策（無料枠で運用）
 
-| 対策 | 内容 |
-|------|------|
-| モデル | `gpt-5-mini`（低コスト）|
-| 出力制限 | `max_tokens: 500` |
-| 履歴制限 | 直近6件のみ送信 |
-| 入力文字数 | 200文字まで |
-| レートリミット | 10秒に1リクエストまで |
+| 対策           | 内容                     |
+| -------------- | ------------------------ |
+| モデル         | `gpt-4o-mini`（低コスト） |
+| 出力制限       | `max_tokens: 350`        |
+| 履歴制限       | 直近6件のみ送信          |
+| 入力文字数     | 200文字まで              |
+| レートリミット | 10秒に1リクエストまで    |
+| 日次上限       | 1日100リクエストまで     |
 
 ---
 
@@ -91,5 +92,5 @@ chatbot/
 
 - **バックエンド**: Node.js / Express
 - **フロントエンド**: HTML / CSS / JavaScript
-- **AI**: OpenAI Chat Completions API（gpt-5-mini）
+- **AI**: GitHub Models API（gpt-4o-mini, OpenAI SDK 互換）
 - **コンテナ**: Docker / Docker Compose
