@@ -7,10 +7,10 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const MAX_HISTORY_MESSAGES = Number(process.env.MAX_HISTORY_MESSAGES || 4);
-const MAX_OUTPUT_TOKENS = Number(process.env.MAX_OUTPUT_TOKENS || 200);
-const DAILY_REQUEST_LIMIT = Number(process.env.DAILY_REQUEST_LIMIT || 30);
-const RATE_LIMIT_WINDOW_SECONDS = Number(process.env.RATE_LIMIT_WINDOW_SECONDS || 30);
+const MAX_HISTORY_MESSAGES = Number(process.env.MAX_HISTORY_MESSAGES || 6);
+const MAX_OUTPUT_TOKENS = Number(process.env.MAX_OUTPUT_TOKENS || 350);
+const DAILY_REQUEST_LIMIT = Number(process.env.DAILY_REQUEST_LIMIT || 100);
+const RATE_LIMIT_WINDOW_SECONDS = Number(process.env.RATE_LIMIT_WINDOW_SECONDS || 10);
 const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS || 1);
 
 // GitHub Models クライアント（OpenAI SDK 互換）
