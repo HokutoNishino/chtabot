@@ -1,0 +1,8 @@
+# 環境変数（APIキーを含むため絶対にコミットしない）
+.env
+
+# Node.js
+node_modules/
+
+# OS
+.DS_Store
