@@ -8,7 +8,7 @@
 ## この手順書でできること
 
 - ブラウザで動くチャットボットをゼロから作る
-- ChatGPT（OpenAI API）を使って AI と会話できるようにする
+- GitHub Models（gpt-4o-mini）を使って AI と会話できるようにする
 - Docker を使って、誰のパソコンでも同じように動かせるようにする
 - GitHub でコードを管理する
 
@@ -76,8 +76,8 @@ STEP 5: GitHub にアップロードする
 
 - ブラウザで動く
 - Node.js + Express のサーバー
-- OpenAI API (gpt-5-mini) を使う
-- Docker で起動する
+- GitHub Models API (gpt-4o-mini) を使う（OpenAI SDK 互換）
+- Docker（node:22-alpine）で起動する
 - コストを抑えるため、入力200文字制限・出力500トークン制限・10秒レートリミットをつける
 - フロントエンドは HTML/JS の1ファイル
 ```
@@ -123,7 +123,8 @@ Copilot Chat に以下を貼り付ける：
 
 ```
 Node.js + Express のプロジェクト用の package.json を作成してください。
-使用するパッケージは express、openai、dotenv です。
+使用するパッケージは express、openai、dotenv、express-rate-limit です。
+Node.js のバージョンは 22 以上を engines フィールドに指定してください。
 start スクリプトは `node server.js` にしてください。
 ```
 
@@ -194,7 +195,7 @@ start スクリプトは `node server.js` にしてください。
 
 ```
 Node.js アプリ用の Dockerfile を作成してください。
-- ベースイメージは node:20-alpine
+- ベースイメージは node:22-alpine
 - 作業ディレクトリは /app
 - package.json をコピーして npm install
 - その後全ファイルをコピー
